@@ -1,5 +1,5 @@
 // \file Radioino.ino
-// \brief FM Radio implementation using RDA5807M, Verstärker, LCD 1602, TTP224.
+// \brief FM Radio implementation using RDA5807M, 'Verstärker', LCD 1602, 4Buttons/TTP224.
 //
 // \author WeWeWe - Welle West Wetterau e.V.
 // \copyright Copyright (c) 2018 by WeWeWe - Welle West Wetterau e.V.\n
@@ -31,10 +31,21 @@
 // | Disp           | toggle display mode |                 |                     | > freq > radio > audio >  |
 // +----------------+---------------------+-----------------+---------------------+---------------------------+
 //
+// LCD display:
+// +---------------------------------------------------+
+// |  Programmname  |  (T)uned (S)tereo (M)ute (B)oost |
+// | > RDS Text > FREQ > RDS Time > Audio > Signal >   |
+// +---------------------------------------------------+
+//
+//
 // History:
 // --------
 // * 02.01.2018 created.
 
+
+// - - - - - - - - - - - - - - - - - - - - - - //
+//  i n c l u d e s
+// - - - - - - - - - - - - - - - - - - - - - - //
 #include <radio.h>
 #include <RDA5807M.h>
 #include <RDSParser.h>
@@ -43,7 +54,7 @@
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
-//  Globals
+//  g l o b a l s
 // - - - - - - - - - - - - - - - - - - - - - - //
 //Buttons
 #define BUTTON_VOLDOWN 2
@@ -57,7 +68,7 @@ OneButton buttR3We(BUTTON_R3WE, true);
 OneButton buttDisp(BUTTON_DISP, true);
 
 // Define some stations available at your locations here:
-// 89.40 MHz as 8940
+// 87.80 MHz as 8780
 RADIO_FREQ preset[] = {
   8780,  // * WeWeWe
   8930,  // * hr3
@@ -106,7 +117,6 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  functions and callbacks
 // - - - - - - - - - - - - - - - - - - - - - - //
-
 // display volume on change
 void volume() {
   lcd.setCursor(0, 1);
@@ -121,7 +131,7 @@ void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t blo
 } //RDS_process
 
 // callback pdate the ServiceName text on the LCD display
-void DisplayServiceName(char *name) {
+void UpdateServiceName(char *name) {
   lcd.setCursor(0, 0); lcd.print("        "); // clear 8 chars
   lcd.setCursor(0, 0); lcd.print(name);
 } // DisplayServiceName
@@ -175,7 +185,7 @@ void R3We() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
-//  Display updater
+//  d i s p l a y   u p d a t e r
 // - - - - - - - - - - - - - - - - - - - - - - //
 // Update LCD based displayState
 void updateLCD() {
@@ -191,7 +201,7 @@ void updateLCD() {
   info.tuned      ? lcd.print("T ") : lcd.print("  ");  // print "T" if station tuned
   info.stereo     ? lcd.print("S ") : lcd.print("  ");  // print "S" if tuned stereo
   ainfo.softmute  ? lcd.print("M ") : lcd.print("  ");  // print "M" if muted
-  ainfo.bassBoost ? lcd.print("B")  : lcd.print(displayState);   // print "B" if loundness is ON
+  ainfo.bassBoost ? lcd.print("B")  : lcd.print(" ");   // print "B" if loundness is ON
   if (displayState != lastDisp) {
     //erase Diplay if state changed
     lastDisp = displayState;
@@ -307,10 +317,9 @@ void displayGreetings() {
   lcd.createChar(4, s4);
   lcd.createChar(5, s5);
   lcd.createChar(6, s6);
+  lcd.backlight();
   lcd.clear();
   lcd.blink();
-  lcd.cursor();
-  lcd.backlight();
   lcd.setCursor(1, 0); lcd.write((uint8_t) 2); lcd.write((uint8_t) 3);
   lcd.print(" *RADIOINO*");
   lcd.setCursor(0, 1); lcd.write((uint8_t) 4); lcd.write((uint8_t) 5);
@@ -333,13 +342,12 @@ void displayGreetings() {
   }
   delay(2000);
   lcd.noBlink();
-  lcd.noCursor();
   lcd.clear();
 } //displayGreetings
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
-//  Setup and initialisations
+//  s e t u p   &   i n i t
 // - - - - - - - - - - - - - - - - - - - - - - //
 void setup() {
   // Initialize the Display
@@ -354,7 +362,7 @@ void setup() {
   radio.setVolume(1);
   // setup the information chain for RDS data.
   radio.attachReceiveRDS(RDS_process);
-  rds.attachServicenNameCallback(DisplayServiceName); // callback for rds programmname
+  rds.attachServicenNameCallback(UpdateServiceName); // callback for rds programmname
   rds.attachTextCallback(UpdateRDSText); // callback for rds radio text
   rds.attachTimeCallback(UpdateRDSTime); // callback for rds time
 
@@ -371,7 +379,7 @@ void setup() {
   buttVolDown.attachClick(VolDown);
   buttVolDown.attachDoubleClick(Mute);
   //  buttVolDown.attachDuringLongPress();
-  //  buttR3We.attachClick(R3We);
+  buttR3We.attachClick(R3We);
   //  buttR3We.attachDoubleClick();
   //  buttR3We.attachLongPressStart();
   buttDisp.attachClick(Display);
@@ -381,22 +389,22 @@ void setup() {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
-//  main loop
+//  m a i n   l o o p
 // - - - - - - - - - - - - - - - - - - - - - - //
 void loop() {
   unsigned long now = millis();
   static unsigned long nextDispTime = 0;
   static unsigned long nextRDSTime = 0;
-  static unsigned long nextTick = 0;
+  //static unsigned long nextTick = 0;
 
   // Check Buttons
-  if (now > nextTick) {
-    buttVolUp.tick();
-    buttVolDown.tick();
-    buttR3We.tick();
-    buttDisp.tick();
-    nextTick = now + 5;
-  }
+  //if (now > nextTick) {
+  buttVolUp.tick();
+  buttVolDown.tick();
+  buttR3We.tick();
+  buttDisp.tick();
+  //  nextTick = now + 5;
+  //}
 
   // check for RDS data
   if (now > nextRDSTime) {
