@@ -3,15 +3,19 @@ Arduino (nano) sketch for FM radio chip (RDA5807M) and 1602 LCD using I2C
 
 # Details
 This is a full function radio implementation that uses a LCD display to show the current station information.\n
-Its using a Arduino Nano for controling other chips using I2C
+Its using a Arduino Nano for controling other chips using I2C.
 
 # Depencies:
 aka the giant shoulders we stand on
+
 https://github.com/mathertel/Radio
+
 https://github.com/mathertel/OneButton
+
 https://github.com/marcoschwartz/LiquidCrystal_I2C
 
 # Wiring:
+
 t.b.d.
 
 # Userinterface:
