@@ -1,4 +1,4 @@
-# Radino
+# Radioino
 Arduino (nano) sketch for FM radio chip (RDA5807M) and 1602 LCD using I2C
 
 # Details
