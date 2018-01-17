@@ -68,10 +68,10 @@
 #define BUTTON_R3WE    4
 #define BUTTON_DISP    5
 
-OneButton buttVolUp(BUTTON_VOLUP, true);
-OneButton buttVolDown(BUTTON_VOLDOWN, true);
-OneButton buttR3We(BUTTON_R3WE, true);
-OneButton buttDisp(BUTTON_DISP, true);
+OneButton buttVolUp(BUTTON_VOLUP, false);
+OneButton buttVolDown(BUTTON_VOLDOWN, false);
+OneButton buttR3We(BUTTON_R3WE, false);
+OneButton buttDisp(BUTTON_DISP, false);
 
 // Define some stations available at your locations here:
 // 87.80 MHz as 8780
@@ -184,11 +184,15 @@ void Display() {
   displayState++;
 } //Display
 
-// callback for R3We Button click
+// callback for R3We Button
 void R3We() {
   radio.setFrequency(preset[0]);
 } //R3We
 
+// callback for SeekUp
+void SeekUp() {
+  radio.seekUp(true);
+} //SeekUp
 
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  d i s p l a y   u p d a t e r
@@ -392,7 +396,7 @@ void setup() {
   //  buttVolDown.attachDuringLongPress();
   buttR3We.attachClick(R3We);
   //  buttR3We.attachDoubleClick();
-  //  buttR3We.attachLongPressStart();
+  buttR3We.attachLongPressStart(SeekUp);
   buttDisp.attachClick(Display);
   //  buttDisp.attachDoubleClick();
   //  buttDisp.attachLongPressStart();
