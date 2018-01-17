@@ -82,7 +82,7 @@ RADIO_FREQ preset[] = {
   10590, // * FFH
   10660  // * Radio Bob
 };
-int    i_sidx = 0;
+int    i_sidx = 1;
 
 // What to Display
 // on any change don't forget to change ++ operator below and lastDisp variable in updateLCD
@@ -214,16 +214,19 @@ void updateLCD() {
     lcd.setCursor(0, 1);
     lcd.print("                 ");
   }
+  RADIO_FREQ freq = radio.getFrequency();
+  if (freq != lastfreq) {
+    lastfreq = freq;
+    rdsText = "Kein RDS Text ... so weit";
+    char *s = "No Name"; 
+    UpdateServiceName(s);
+  }
   lcd.setCursor(0, 1);
   switch (displayState) {
     case FREQ: {
-        RADIO_FREQ freq = radio.getFrequency();
-        if (freq != lastfreq) {
-          lastfreq = freq;
-          char s[12];
-          radio.formatFrequency(s, sizeof(s));
-          lcd.print("Freq: "); lcd.print(s);
-        }
+        char s[12];
+        radio.formatFrequency(s, sizeof(s));
+        lcd.print("Freq: "); lcd.print(s);
         break;
       }
     case TEXT: {
@@ -358,7 +361,7 @@ void displayGreetings() {
 void setup() {
   // Initialize the Display
   lcd.init();
-  displayGreetings(); // may be better beyond radio init
+  
 
   // Initialize the Radio
   radio.init();
@@ -366,6 +369,8 @@ void setup() {
   radio.setMono(false);
   radio.setMute(false);
   radio.setVolume(1);
+  
+  displayGreetings();
   // setup the information chain for RDS data.
   radio.attachReceiveRDS(RDS_process);
   rds.attachServicenNameCallback(UpdateServiceName); // callback for rds programmname
@@ -420,6 +425,6 @@ void loop() {
   // update the display from time to time
   if (now > nextDispTime) {
     updateLCD();
-    nextDispTime = now + 500;
+    nextDispTime = now + 400;
   }
 } //loop
