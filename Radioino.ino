@@ -2,11 +2,11 @@
 // \brief FM Radio implementation using RDA5807M, 'Verstärker', LCD 1602, 4Buttons/TTP224.
 //
 // \author WeWeWe - Welle West Wetterau e.V.
-// \copyright Copyright (c) 2018 by WeWeWe - Welle West Wetterau e.V.\n
-// This work is licensed under "t.b.d.".\n
+// \copyright Copyright (c) 2018 by WeWeWe - Welle West Wetterau e.V.
+// This work is licensed under "t.b.d.".
 //
 // \details
-// This is a full function radio implementation that uses a LCD display to show the current station information.\n
+// This is a full function radio implementation that uses a LCD display to show the current station information.
 // Its using a Arduino Nano for controling other chips using I2C
 //
 // Depencies:
@@ -37,10 +37,16 @@
 // | > RDS Text > FREQ > RDS Time > Audio > Signal >   |
 // +---------------------------------------------------+
 //
+// To Dos:
+// -------
+// - Button fuctions (long press f)
+// - Audio Info Display
+// - Cool Vol Info
 //
 // History:
 // --------
 // * 02.01.2018 created.
+//
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
@@ -76,7 +82,7 @@ RADIO_FREQ preset[] = {
   10590, // * FFH
   10660  // * Radio Bob
 };
-int    i_sidx = 2;
+int    i_sidx = 0;
 
 // What to Display
 // on any change don't forget to change ++ operator below and lastDisp variable in updateLCD
@@ -89,10 +95,10 @@ enum DISPLAY_STATE {
 } displayState = 0;
 
 // Overload ++ operator, for cylcling trough
-inline DISPLAY_STATE& operator++(DISPLAY_STATE& eDOW, int) {
-  const int i = static_cast<int>(eDOW) + 1;
-  eDOW = static_cast<DISPLAY_STATE>((i) % 5); //Need to be changed if enum type is changes
-  return eDOW;
+inline DISPLAY_STATE& operator++(DISPLAY_STATE& state, int) {
+  const int i = static_cast<int>(state) + 1;
+  state = static_cast<DISPLAY_STATE>((i) % 5); //Need to be changed if enum type is changed
+  return state;
 }
 
 // RDS Time container
@@ -140,7 +146,7 @@ void UpdateServiceName(char *name) {
 void UpdateRDSTime(uint8_t h, uint8_t m) {
   rdsTime.hour = h;
   rdsTime.minute = m;
-} // UpdateRDSTime
+} //UpdateRDSTime
 
 // callback for update on RDS text
 void UpdateRDSText(char *text) {
@@ -173,7 +179,7 @@ void Boost() {
   radio.setBassBoost(!radio.getBassBoost());
 } //Boost
 
-// callback for toggle Display
+// callback for toggle display
 void Display() {
   displayState++;
 } //Display
@@ -187,7 +193,7 @@ void R3We() {
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  d i s p l a y   u p d a t e r
 // - - - - - - - - - - - - - - - - - - - - - - //
-// Update LCD based displayState
+// Update LCD based on displayState
 void updateLCD() {
   static RADIO_FREQ lastfreq = 0;
   static uint8_t lastmin = 0;
@@ -198,12 +204,12 @@ void updateLCD() {
   AUDIO_INFO ainfo;
   radio.getRadioInfo(&info);
   radio.getAudioInfo(&ainfo);
-  info.tuned      ? lcd.print("T ") : lcd.print("  ");  // print "T" if station tuned
+  info.tuned      ? lcd.print("T ") : lcd.print("  ");  // print "T" if station is tuned
   info.stereo     ? lcd.print("S ") : lcd.print("  ");  // print "S" if tuned stereo
   ainfo.softmute  ? lcd.print("M ") : lcd.print("  ");  // print "M" if muted
   ainfo.bassBoost ? lcd.print("B")  : lcd.print(" ");   // print "B" if loundness is ON
   if (displayState != lastDisp) {
-    //erase Diplay if state changed
+    //erase display if state changed
     lastDisp = displayState;
     lcd.setCursor(0, 1);
     lcd.print("                 ");
@@ -263,7 +269,7 @@ void updateLCD() {
   } //switch
 } //updateLCD
 
-//Display A greeting Message :)
+//Display a greeting message :)
 void displayGreetings() {
   byte s2[8] = { 0b00000,
                  0b00001,
@@ -352,7 +358,7 @@ void displayGreetings() {
 void setup() {
   // Initialize the Display
   lcd.init();
-  displayGreetings();
+  displayGreetings(); // may be better beyond radio init
 
   // Initialize the Radio
   radio.init();
