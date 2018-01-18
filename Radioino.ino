@@ -68,7 +68,7 @@
 #define BUTTON_R3WE    4
 #define BUTTON_DISP    5
 
-// if using PULLUPs set bool to TRUE and FALSE for PUllDOWN resistors
+// if using PULLUPs set bool to TRUE and FALSE for PULLDOWN resistors
 OneButton buttVolUp(BUTTON_VOLUP, false); 
 OneButton buttVolDown(BUTTON_VOLDOWN, false);
 OneButton buttR3We(BUTTON_R3WE, false);
