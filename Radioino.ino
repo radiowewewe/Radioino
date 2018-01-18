@@ -85,7 +85,7 @@ RADIO_FREQ preset[] = {
 int    i_sidx = 1;
 
 // What to Display
-// on any change don't forget to change ++ operator below and lastDisp variable in updateLCD
+// on any change don't forget to change ++ operator below
 enum DISPLAY_STATE {
   TEXT,     // radio text (RDS)
   FREQ,     // station freqency
@@ -120,6 +120,7 @@ RDSParser rds;
 // LCD address may vary
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  functions and callbacks
 // - - - - - - - - - - - - - - - - - - - - - - //
@@ -151,7 +152,7 @@ void UpdateRDSTime(uint8_t h, uint8_t m) {
 // callback for update on RDS text
 void UpdateRDSText(char *text) {
   rdsText = String(text);
-} // UpdateTDSText
+} // UpdateRDSText
 
 // callback for volume down
 void VolDown() {
@@ -194,6 +195,7 @@ void SeekUp() {
   radio.seekUp(true);
 } //SeekUp
 
+
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  d i s p l a y   u p d a t e r
 // - - - - - - - - - - - - - - - - - - - - - - //
@@ -202,7 +204,7 @@ void updateLCD() {
   static RADIO_FREQ lastfreq = 0;
   static uint8_t lastmin = 0;
   static uint8_t rdsTexti = 0;
-  static DISPLAY_STATE lastDisp = 0;
+  static DISPLAY_STATE lastDisp = NULL; 
   lcd.setCursor(9, 0);
   RADIO_INFO info;
   AUDIO_INFO ainfo;
@@ -221,8 +223,13 @@ void updateLCD() {
   RADIO_FREQ freq = radio.getFrequency();
   if (freq != lastfreq) {
     lastfreq = freq;
-    rdsText = "Kein RDS Text ... so weit";
-    char *s = "No Name"; 
+    rdsText = "Kein RDS Text ... bitte warten";
+    if (freq == preset[0]) {
+      char *s = " WeWeWe";
+    }
+    else {
+      char *s = "No Name"; 
+    }
     UpdateServiceName(s);
   }
   lcd.setCursor(0, 1);
@@ -342,7 +349,7 @@ void displayGreetings() {
     lcd.print(s.substring(i, i + 1));
     delay(200);
   }
-  delay(500);
+  delay(600);
   for (byte i = 13; i > 2; i--) {
     lcd.setCursor(i, 1);
     lcd.print(" ");
@@ -353,7 +360,7 @@ void displayGreetings() {
     lcd.print(s.substring(i, i + 1));
     delay(200);
   }
-  delay(2000);
+  delay(1600);
   lcd.noBlink();
   lcd.clear();
 } //displayGreetings
@@ -366,15 +373,14 @@ void setup() {
   // Initialize the Display
   lcd.init();
   
-
   // Initialize the Radio
   radio.init();
   radio.setBandFrequency(RADIO_BAND_FM, preset[i_sidx]);
   radio.setMono(false);
   radio.setMute(false);
   radio.setVolume(1);
-  
   displayGreetings();
+  
   // setup the information chain for RDS data.
   radio.attachReceiveRDS(RDS_process);
   rds.attachServicenNameCallback(UpdateServiceName); // callback for rds programmname
@@ -382,11 +388,6 @@ void setup() {
   rds.attachTimeCallback(UpdateRDSTime); // callback for rds time
 
   // Configure our userinterface
-  // Buttons
-  pinMode(BUTTON_VOLDOWN, INPUT); // VolDown
-  pinMode(BUTTON_VOLUP, INPUT);   // VolUp
-  pinMode(BUTTON_R3WE, INPUT);    // WeWeWe
-  pinMode(BUTTON_DISP, INPUT);    // Display
   //Callback for Buttons
   buttVolUp.attachClick(VolUp);
   buttVolUp.attachDoubleClick(Boost);
@@ -410,16 +411,12 @@ void loop() {
   unsigned long now = millis();
   static unsigned long nextDispTime = 0;
   static unsigned long nextRDSTime = 0;
-  //static unsigned long nextTick = 0;
 
   // Check Buttons
-  //if (now > nextTick) {
   buttVolUp.tick();
   buttVolDown.tick();
   buttR3We.tick();
   buttDisp.tick();
-  //  nextTick = now + 5;
-  //}
 
   // check for RDS data
   if (now > nextRDSTime) {
