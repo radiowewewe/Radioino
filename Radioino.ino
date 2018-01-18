@@ -69,7 +69,7 @@
 #define BUTTON_DISP    5
 
 // if using PULLUPs set bool to TRUE and FALSE for PULLDOWN resistors
-OneButton buttVolUp(BUTTON_VOLUP, false); 
+OneButton buttVolUp(BUTTON_VOLUP, false);
 OneButton buttVolDown(BUTTON_VOLDOWN, false);
 OneButton buttR3We(BUTTON_R3WE, false);
 OneButton buttDisp(BUTTON_DISP, false);
@@ -91,14 +91,13 @@ enum DISPLAY_STATE {
   TEXT,     // radio text (RDS)
   FREQ,     // station freqency
   TIME,     // time (RDS)
-  AUDIO,    // Volume info, muted, stereo/mono, boost
   SIG       // signalinfo SNR RSSI
 } displayState = 0;
 
 // Overload ++ operator, for cylcling trough
 inline DISPLAY_STATE& operator++(DISPLAY_STATE& state, int) {
   const int i = static_cast<int>(state) + 1;
-  state = static_cast<DISPLAY_STATE>((i) % 5); //Need to be changed if enum type is changed
+  state = static_cast<DISPLAY_STATE>((i) % 4); //Need to be changed if enum type is changed
   return state;
 }
 
@@ -157,23 +156,24 @@ void UpdateRDSText(char *text) {
 
 // callback for volume down
 void VolDown() {
-  int v = radio.getVolume();
+  uint8_t v = radio.getVolume();
   if (v > 0) radio.setVolume(--v);
-  else if (v == 0) radio.setSoftMute(true);
+  else if (v == 0) radio.setMute(true);
   volume();
 } //VolDown
 
 // callback for volume up
 void VolUp() {
-  int v = radio.getVolume();
-  if (v < 15) radio.setVolume(++v);
-  else if (v >= 0) radio.setSoftMute(false);
+  uint8_t v = radio.getVolume();
+  
+  if (radio.getMute()) radio.setMute(false);
+  else if (v < 15) radio.setVolume(++v);
   volume();
 } //VolUp
 
 // callback for toggle mute
 void Mute() {
-  radio.setSoftMute(!radio.getSoftMute());
+  radio.setMute(!radio.getMute());
 } //Mute
 
 // callback for toggle boost
@@ -205,7 +205,8 @@ void updateLCD() {
   static RADIO_FREQ lastfreq = 0;
   static uint8_t lastmin = 0;
   static uint8_t rdsTexti = 0;
-  static DISPLAY_STATE lastDisp = NULL; 
+  static DISPLAY_STATE lastDisp = 0;
+
   lcd.setCursor(9, 0);
   RADIO_INFO info;
   AUDIO_INFO ainfo;
@@ -213,7 +214,7 @@ void updateLCD() {
   radio.getAudioInfo(&ainfo);
   info.tuned      ? lcd.print("T ") : lcd.print("  ");  // print "T" if station is tuned
   info.stereo     ? lcd.print("S ") : lcd.print("  ");  // print "S" if tuned stereo
-  ainfo.softmute  ? lcd.print("M ") : lcd.print("  ");  // print "M" if muted
+  ainfo.mute      ? lcd.print("M ") : lcd.print("  ");  // print "M" if muted
   ainfo.bassBoost ? lcd.print("B")  : lcd.print(" ");   // print "B" if loundness is ON
   if (displayState != lastDisp) {
     //erase display if state changed
@@ -227,11 +228,12 @@ void updateLCD() {
     rdsText = "Kein RDS Text ... bitte warten";
     if (freq == preset[0]) {
       char *s = " WeWeWe";
+      UpdateServiceName(s);
     }
     else {
-      char *s = "No Name"; 
+      char *s = "No Name";
+      UpdateServiceName(s);
     }
-    UpdateServiceName(s);
   }
   lcd.setCursor(0, 1);
   switch (displayState) {
@@ -245,9 +247,6 @@ void updateLCD() {
         lcd.print(rdsText.substring(rdsTexti, rdsTexti + 15));
         (rdsText.length() > rdsTexti + 15) ? rdsTexti++ : rdsTexti = 0;
         break;
-      }
-    case AUDIO: {
-        lcd.print("Audio not impl.");
       }
     case TIME: {
         if (rdsTime.hour != NULL ) {
@@ -279,8 +278,6 @@ void updateLCD() {
         lcd.print(s);
         break;
       }
-    default:
-      break; // do nothing
   } //switch
 } //updateLCD
 
@@ -373,7 +370,7 @@ void displayGreetings() {
 void setup() {
   // Initialize the Display
   lcd.init();
-  
+
   // Initialize the Radio
   radio.init();
   radio.setBandFrequency(RADIO_BAND_FM, preset[i_sidx]);
@@ -381,7 +378,7 @@ void setup() {
   radio.setMute(false);
   radio.setVolume(1);
   displayGreetings();
-  
+
   // setup the information chain for RDS data.
   radio.attachReceiveRDS(RDS_process);
   rds.attachServicenNameCallback(UpdateServiceName); // callback for rds programmname
