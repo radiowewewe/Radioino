@@ -141,7 +141,7 @@ void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t blo
 void UpdateServiceName(char *name) {
   lcd.setCursor(0, 0); lcd.print("        "); // clear 8 chars
   lcd.setCursor(0, 0); lcd.print(name);
-} // DisplayServiceName
+} // UpdateServiceName
 
 // callback update on RDS time
 void UpdateRDSTime(uint8_t h, uint8_t m) {
@@ -244,7 +244,7 @@ void updateLCD() {
         break;
       }
     case TEXT: {
-        lcd.print(rdsText.substring(rdsTexti, rdsTexti + 15));
+        lcd.print(rdsText.substring(rdsTexti, rdsTexti + 16));
         (rdsText.length() > rdsTexti + 15) ? rdsTexti++ : rdsTexti = 0;
         break;
       }
@@ -253,7 +253,7 @@ void updateLCD() {
           if (rdsTime.minute != lastmin) {
             lastmin = rdsTime.minute;
             String s;
-            s = "      ";
+            s = "     ";
             if (rdsTime.hour < 10) s += "0";
             s += rdsTime.hour;
             s += ":";
@@ -264,7 +264,7 @@ void updateLCD() {
           }
         }
         else {
-          lcd.print("NO RDS DATE/TIME");
+          lcd.print("NO RDS TIME");
         }
         break;
       }
