@@ -2,8 +2,8 @@
 Arduino (nano) sketch for FM radio chip (RDA5807M) and 1602 LCD using I2C
 
 # Details
-This is a full function radio implementation of a RDA5807M chip that uses a LCD display to show the current station information.
-Its using a Arduino Nano for controling using I2C.
+This is a full function FM radio implementation of a RDA5807M chip that uses a LCD display to show the current station information.
+It's using a Arduino Nano for controling via I2C.
 
 # Depencies:
 aka the giant shoulders we stand on
@@ -38,4 +38,6 @@ LCD display:
 ```
 
 # License
-will be free ... but is still under construction :|
+BSD 3-Clause License
+Copyright (c) 2018, WeWeWe - Welle West Wetterau e.V. All rights reserved.
+For details see LICENSE.
