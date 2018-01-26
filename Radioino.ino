@@ -3,11 +3,11 @@
 //
 // \author WeWeWe - Welle West Wetterau e.V.
 // \copyright Copyright (c) 2018 by WeWeWe - Welle West Wetterau e.V.
-// This work is licensed under "t.b.d.".
+// This work is licensed under BSD 3-Clause License.
 //
 // \details
 // This is a full function radio implementation that uses a LCD display to show the current station information.
-// Its using a Arduino Nano for controling other chips using I2C
+// It's using a Arduino Nano for controling other chips via I2C
 //
 // Depencies:
 // ----------
