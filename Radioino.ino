@@ -25,9 +25,9 @@
 // +----------------+---------------------+-----------------+---------------------+---------------------------+
 // | Button \ Event |       click()       | double click()  |     long press      |          comment          |
 // +----------------+---------------------+-----------------+---------------------+---------------------------+
-// | VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq min then mute   |
+// | VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq 0 then mute     |
 // | VolUp          | +1 volume           | toggle loudness | each 500ms +1       | if muted the first unmute |
-// | R3We           | tune 87.8 MHz       |                 | scan to next sender |                           |
+// | R3We           | tune 87.8 MHz       | toggle presets  | scan to next sender |                           |
 // | Disp           | toggle display mode |                 |                     | > freq > radio > audio >  |
 // +----------------+---------------------+-----------------+---------------------+---------------------------+
 //
@@ -39,14 +39,18 @@
 //
 // To Dos:
 // -------
-// - Button fuctions (long press f)
 // - Audio Info Display
-// - Cool Vol Info
+//
+// Issues:
+// -------
+// * In the implementation of "seekUp|Down function" in <RDA5807M.cpp> search for
+// "registers[RADIO_REG_CTRL] &= (~RADIO_REG_CTRL_SEEK);" and put it before if statement
+// also see comments in https://github.com/mathertel/Radio/issues/5
 //
 // History:
 // --------
 // * 02.01.2018 created.
-//
+// * 28.01.2018 solution to issue with seek function
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
@@ -68,7 +72,8 @@
 #define BUTTON_R3WE    4
 #define BUTTON_DISP    5
 
-// if using PULLUPs set bool to TRUE and FALSE for PULLDOWN resistors
+// if using PULL-UPs set bool to TRUE and FALSE for PULL-DOWN resistors
+// note: arudinos usaly have only bultin PLLU-UPs
 OneButton buttVolUp(BUTTON_VOLUP, false);
 OneButton buttVolDown(BUTTON_VOLDOWN, false);
 OneButton buttR3We(BUTTON_R3WE, false);
@@ -77,13 +82,13 @@ OneButton buttDisp(BUTTON_DISP, false);
 // Define some stations available at your locations here:
 // 87.80 MHz as 8780
 RADIO_FREQ preset[] = {
-  8780,  // * WeWeWe
+  8780,  // * WeWeWe, hopefully your favorite :)
   8930,  // * hr3
   9440,  // * hr1
   10590, // * FFH
   10660  // * Radio Bob
 };
-int    i_sidx = 1;
+byte i_sidx = 0;
 
 // What to Display
 // on any change don't forget to change ++ operator below
@@ -124,12 +129,21 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  functions and callbacks
 // - - - - - - - - - - - - - - - - - - - - - - //
-// display volume on change
+// display volume
 void volume() {
+  lcd.setCursor(0, 1); for (byte i = 0; i < 16; i++) lcd.print(" ");
   lcd.setCursor(0, 1);
-  lcd.print("Vol:" );
-  lcd.print(radio.getVolume());
-  delay(300);
+  lcd.print("Vol: ");
+  if (radio.getMute()) {
+    lcd.print("muted");
+  }
+  else {
+    for (uint8_t i = 0; i < ((radio.getVolume() + 1) >> 1); i++) lcd.write((uint8_t) 0xFF);
+    if (!(radio.getVolume() & 0x01)) lcd.write((uint8_t) 0x06);
+    lcd.print(" ");
+    lcd.print(radio.getVolume());
+  }
+  delay(500);
 } //volume
 
 // callback for RDS parser by radio
@@ -137,21 +151,25 @@ void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t blo
   rds.processData(block1, block2, block3, block4);
 } //RDS_process
 
-// callback pdate the ServiceName text on the LCD display
+// callback display the ServiceName text on the LCD display
 void UpdateServiceName(char *name) {
-  lcd.setCursor(0, 0); lcd.print("        "); // clear 8 chars
+  lcd.setCursor(0, 0); for (byte i = 0; i < 8; i++) lcd.print(" ");
   lcd.setCursor(0, 0); lcd.print(name);
-} // UpdateServiceName
+} //UpdateServiceName
 
 // callback update on RDS time
 void UpdateRDSTime(uint8_t h, uint8_t m) {
-  rdsTime.hour = h;
+  rdsTime.hour   = h;
   rdsTime.minute = m;
 } //UpdateRDSTime
 
 // callback for update on RDS text
 void UpdateRDSText(char *text) {
-  rdsText = String(text);
+  if (text && text[0]) {
+    rdsText = String(text) + "   ";
+    lcd.setCursor(0, 1);
+    for (byte i = 0; i < 16; i++) lcd.print(" ");
+  }
 } // UpdateRDSText
 
 // callback for volume down
@@ -165,7 +183,6 @@ void VolDown() {
 // callback for volume up
 void VolUp() {
   uint8_t v = radio.getVolume();
-  
   if (radio.getMute()) radio.setMute(false);
   else if (v < 15) radio.setVolume(++v);
   volume();
@@ -188,13 +205,30 @@ void Display() {
 
 // callback for R3We Button
 void R3We() {
-  radio.setFrequency(preset[0]);
+  i_sidx = 0;
+  radio.setFrequency(preset[i_sidx]);
 } //R3We
 
 // callback for SeekUp
 void SeekUp() {
+  lcd.setCursor(0, 0); for (byte i = 0; i < 8; i++) lcd.print(" ");
+  lcd.setCursor(0, 0); lcd.print("Suche...");
   radio.seekUp(true);
 } //SeekUp
+
+// callback for SeekUp futher while button is still pressed
+void SeekUp2() {
+  RADIO_INFO info;
+  radio.getRadioInfo(&info);
+  if (info.tuned) radio.seekUp(true);
+} //SeekUp
+
+// callback cycling presets
+void nextPreset() {
+  i_sidx += 1;
+  i_sidx %= sizeof(preset) / sizeof (RADIO_FREQ);
+  radio.setFrequency(preset[i_sidx]);
+} //nextPreset
 
 
 // - - - - - - - - - - - - - - - - - - - - - - //
@@ -206,6 +240,7 @@ void updateLCD() {
   static uint8_t lastmin = 0;
   static uint8_t rdsTexti = 0;
   static DISPLAY_STATE lastDisp = 0;
+  static unsigned long nextScrollTime = 0;
 
   lcd.setCursor(9, 0);
   RADIO_INFO info;
@@ -220,12 +255,12 @@ void updateLCD() {
     //erase display if state changed
     lastDisp = displayState;
     lcd.setCursor(0, 1);
-    lcd.print("                 ");
+    for (byte i = 0; i < 16; i++) lcd.print(" ");
   }
   RADIO_FREQ freq = radio.getFrequency();
-  if (freq != lastfreq) {
+  if (freq != lastfreq && !buttR3We.isLongPressed()) {
     lastfreq = freq;
-    rdsText = "Kein RDS Text ... bitte warten";
+    rdsText = "Kein RDS Text ... bitte warten  ";
     if (freq == preset[0]) {
       char *s = " WeWeWe";
       UpdateServiceName(s);
@@ -244,24 +279,25 @@ void updateLCD() {
         break;
       }
     case TEXT: {
-        lcd.print(rdsText.substring(rdsTexti, rdsTexti + 16));
-        (rdsText.length() > rdsTexti + 15) ? rdsTexti++ : rdsTexti = 0;
+        if (millis() > nextScrollTime) {
+          nextScrollTime = millis() + 500;
+          lcd.print(rdsText.substring(rdsTexti, rdsTexti + 16));
+          (rdsText.length() > rdsTexti + 15) ? rdsTexti++ : rdsTexti = 0;
+        }
         break;
       }
     case TIME: {
         if (rdsTime.hour != NULL ) {
-          if (rdsTime.minute != lastmin) {
-            lastmin = rdsTime.minute;
-            String s;
-            s = "     ";
-            if (rdsTime.hour < 10) s += "0";
-            s += rdsTime.hour;
-            s += ":";
-            if (rdsTime.minute < 10) s += "0";
-            s += rdsTime.minute;
-            s += "     ";
-            lcd.print(s);
-          }
+          lastmin = rdsTime.minute;
+          String s;
+          s = "     ";
+          if (rdsTime.hour < 10) s += "0";
+          s += rdsTime.hour;
+          s += ":";
+          if (rdsTime.minute < 10) s += "0";
+          s += rdsTime.minute;
+          s += "     ";
+          lcd.print(s);
         }
         else {
           lcd.print("NO RDS TIME");
@@ -338,9 +374,9 @@ void displayGreetings() {
   lcd.backlight();
   lcd.clear();
   lcd.blink();
-  lcd.setCursor(1, 0); lcd.write((uint8_t) 2); lcd.write((uint8_t) 3);
+  lcd.setCursor(1, 0); lcd.write((uint8_t) 0x02); lcd.write((uint8_t) 0x03);
   lcd.print(" *RADIOINO*");
-  lcd.setCursor(0, 1); lcd.write((uint8_t) 4); lcd.write((uint8_t) 5);
+  lcd.setCursor(0, 1); lcd.write((uint8_t) 0x04); lcd.write((uint8_t) 0x05);
   lcd.setCursor(4, 1);
   String s = "Welle West";
   for (byte i = 0; i < 11; i++) {
@@ -370,6 +406,7 @@ void displayGreetings() {
 void setup() {
   // Initialize the Display
   lcd.init();
+  lcd.backlight();
 
   // Initialize the Radio
   radio.init();
@@ -386,16 +423,17 @@ void setup() {
   rds.attachTimeCallback(UpdateRDSTime); // callback for rds time
 
   // Configure our userinterface
-  //Callback for Buttons
+  //attach callback for Buttons
   buttVolUp.attachClick(VolUp);
   buttVolUp.attachDoubleClick(Boost);
-  //  buttVolUp.attachDuringLongPress();
+  buttVolUp.attachDuringLongPress(VolUp);
   buttVolDown.attachClick(VolDown);
   buttVolDown.attachDoubleClick(Mute);
-  //  buttVolDown.attachDuringLongPress();
+  buttVolDown.attachDuringLongPress(VolDown);
   buttR3We.attachClick(R3We);
-  //  buttR3We.attachDoubleClick();
+  buttR3We.attachDoubleClick(nextPreset);
   buttR3We.attachLongPressStart(SeekUp);
+  buttR3We.attachDuringLongPress(SeekUp2);
   buttDisp.attachClick(Display);
   //  buttDisp.attachDoubleClick();
   //  buttDisp.attachLongPressStart();
@@ -416,7 +454,7 @@ void loop() {
   buttR3We.tick();
   buttDisp.tick();
 
-  // check for RDS data
+  // check for RDS data from time to time
   if (now > nextRDSTime) {
     radio.checkRDS();
     nextRDSTime = now + 50;
@@ -424,6 +462,6 @@ void loop() {
   // update the display from time to time
   if (now > nextDispTime) {
     updateLCD();
-    nextDispTime = now + 400;
+    nextDispTime = now + 200;
   }
 } //loop
