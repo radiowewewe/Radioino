@@ -1,5 +1,5 @@
 // \file Radioino.ino
-// \brief FM Radio implementation using RDA5807M, 'Verstärker', LCD 1602, 4Buttons/TTP224.
+// \brief FM Radio implementation using RDA5807M, PAM8403, LCD 1602, 4Buttons/TTP224.
 //
 // \author WeWeWe - Welle West Wetterau e.V.
 // \copyright Copyright (c) 2018 by WeWeWe - Welle West Wetterau e.V.
@@ -7,7 +7,8 @@
 //
 // \details
 // This is a full function radio implementation that uses a LCD display to show the current station information.
-// It's using a Arduino Nano for controling other chips via I2C
+// It's using a Arduino Nano for controling other chips via I2C. PAM8403 is used for amplification of the
+// output from RDA5807M.
 //
 // Depencies:
 // ----------
@@ -22,24 +23,20 @@
 //
 // Userinterface:
 // --------------
-// +----------------+---------------------+-----------------+---------------------+---------------------------+
-// | Button \ Event |       click()       | double click()  |     long press      |          comment          |
-// +----------------+---------------------+-----------------+---------------------+---------------------------+
-// | VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq 0 then mute     |
-// | VolUp          | +1 volume           | toggle loudness | each 500ms +1       | if muted the first unmute |
-// | R3We           | tune 87.8 MHz       | toggle presets  | scan to next sender |                           |
-// | Disp           | toggle display mode |                 |                     | > freq > radio > audio >  |
-// +----------------+---------------------+-----------------+---------------------+---------------------------+
+// +----------------+---------------------+-----------------+---------------------+----------------------------+
+// | Button \ Event |       click()       | double click()  |    long press()     |          comment           |
+// +----------------+---------------------+-----------------+---------------------+----------------------------+
+// | VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq 0 then mute      |
+// | VolUp          | +1 volume           | toggle loudness | each 500ms +1       | if muted then first unmute |
+// | R3We           | tune 87.8 MHz       | toggle presets  | scan to next sender |                            |
+// | Disp           | toggle display mode |                 |                     | > freq > radio > audio >   |
+// +----------------+---------------------+-----------------+---------------------+----------------------------+
 //
 // LCD display:
-// +---------------------------------------------------+
-// |  Programmname  |  (T)uned (S)tereo (M)ute (B)oost |
-// | > RDS Text > FREQ > RDS Time > Audio > Signal >   |
-// +---------------------------------------------------+
-//
-// To Dos:
-// -------
-// - Audio Info Display
+// +----------------------------------------------------+
+// |  Programmname  |  (T)uned (S)tereo (M)ute (B)oost  |
+// |  > RDS Text > FREQ > RDS Time > Audio > Signal >   |
+// +----------------------------------------------------+
 //
 // Issues:
 // -------
@@ -96,13 +93,14 @@ enum DISPLAY_STATE {
   TEXT,     // radio text (RDS)
   FREQ,     // station freqency
   TIME,     // time (RDS)
+  AUDIO,    // audio info / volume
   SIG       // signalinfo SNR RSSI
 } displayState = 0;
 
 // Overload ++ operator, for cylcling trough
 inline DISPLAY_STATE& operator++(DISPLAY_STATE& state, int) {
   const int i = static_cast<int>(state) + 1;
-  state = static_cast<DISPLAY_STATE>((i) % 4); //Need to be changed if enum type is changed
+  state = static_cast<DISPLAY_STATE>((i) % 5); //Need to be changed if enum type is changed
   return state;
 }
 
@@ -143,7 +141,6 @@ void volume() {
     lcd.print(" ");
     lcd.print(radio.getVolume());
   }
-  delay(500);
 } //volume
 
 // callback for RDS parser by radio
@@ -177,7 +174,7 @@ void VolDown() {
   uint8_t v = radio.getVolume();
   if (v > 0) radio.setVolume(--v);
   else if (v == 0) radio.setMute(true);
-  volume();
+  volume(); delay(500);
 } //VolDown
 
 // callback for volume up
@@ -185,7 +182,7 @@ void VolUp() {
   uint8_t v = radio.getVolume();
   if (radio.getMute()) radio.setMute(false);
   else if (v < 15) radio.setVolume(++v);
-  volume();
+  volume(); delay(500);
 } //VolUp
 
 // callback for toggle mute
@@ -239,16 +236,16 @@ void updateLCD() {
   static RADIO_FREQ lastfreq = 0;
   static uint8_t lastmin = 0;
   static uint8_t rdsTexti = 0;
-  static DISPLAY_STATE lastDisp = 0;
+  static DISPLAY_STATE lastDisp = NULL;
   static unsigned long nextScrollTime = 0;
 
   lcd.setCursor(9, 0);
-  RADIO_INFO info;
+  RADIO_INFO rinfo;
   AUDIO_INFO ainfo;
-  radio.getRadioInfo(&info);
+  radio.getRadioInfo(&rinfo);
   radio.getAudioInfo(&ainfo);
-  info.tuned      ? lcd.print("T ") : lcd.print("  ");  // print "T" if station is tuned
-  info.stereo     ? lcd.print("S ") : lcd.print("  ");  // print "S" if tuned stereo
+  rinfo.tuned     ? lcd.print("T ") : lcd.print("  ");  // print "T" if station is tuned
+  rinfo.stereo    ? lcd.print("S ") : lcd.print("  ");  // print "S" if tuned stereo
   ainfo.mute      ? lcd.print("M ") : lcd.print("  ");  // print "M" if muted
   ainfo.bassBoost ? lcd.print("B")  : lcd.print(" ");   // print "B" if loundness is ON
   if (displayState != lastDisp) {
@@ -307,11 +304,15 @@ void updateLCD() {
     case SIG: {
         String s;
         s = "SNR: ";
-        s += info.snr;
+        s += rinfo.snr;
         s += " RSSI: ";
-        s += info.rssi;
+        s += rinfo.rssi;
         s += "   ";
         lcd.print(s);
+        break;
+      }
+    case AUDIO: {
+        volume();
         break;
       }
   } //switch
