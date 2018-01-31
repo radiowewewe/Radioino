@@ -20,21 +20,21 @@ t.b.d.
 
 # Userinterface:
 ```
-+----------------+---------------------+-----------------+---------------------+---------------------------+
-| Button \ Event |       click()       | double click()  |     long press      |          comment          |
-+----------------+---------------------+-----------------+---------------------+---------------------------+
-| VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq min then mute   |
-| VolUp          | +1 volume           | toggle loudness | each 500ms +1       | if muted the first unmute |
-| R3We           | tune 87.8 MHz       |                 | scan to next sender |                           |
-| Disp           | toggle display mode |                 |                     | > freq > radio > audio >  |
-+----------------+---------------------+-----------------+---------------------+---------------------------+
++----------------+---------------------+-----------------+---------------------+----------------------------+
+| Button \ Event |       click()       | double click()  |    long press()     |          comment           |
++----------------+---------------------+-----------------+---------------------+----------------------------+
+| VolDwn         | -1 volume           | toggle mute     | each 500ms -1       | if vol eq 0 then mute      |
+| VolUp          | +1 volume           | toggle loudness | each 500ms +1       | if muted then first unmute |
+| R3We           | tune 87.8 MHz       | toggle presets  | scan to next sender |                            |
+| Disp           | toggle display mode |                 |                     | > freq > radio > audio >   |
++----------------+---------------------+-----------------+---------------------+----------------------------+
 ```
 LCD display:
 ```
-+---------------------------------------------------+
-|  Programmname  |  (T)uned (S)tereo (M)ute (B)oost |
-| > RDS Text > FREQ > RDS Time > Audio > Signal >   |
-+---------------------------------------------------+
++----------------------------------------------------+
+|  Programmname  |  (T)uned (S)tereo (M)ute (B)oost  |
+|  > RDS Text > FREQ > RDS Time > Audio > Signal >   |
++----------------------------------------------------+
 ```
 
 # License
