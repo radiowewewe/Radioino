@@ -70,7 +70,7 @@
 #define BUTTON_DISP    5
 
 // if using PULL-UPs set bool to TRUE and FALSE for PULL-DOWN resistors
-// note: arudinos usaly have only bultin PLLU-UPs
+// note: arudinos usaly have only bultin PULL-UPs
 OneButton buttVolUp(BUTTON_VOLUP, false);
 OneButton buttVolDown(BUTTON_VOLDOWN, false);
 OneButton buttR3We(BUTTON_R3WE, false);
@@ -111,7 +111,7 @@ struct {
 } rdsTime;
 
 // RDS Text container
-String rdsText = " ";
+String rdsText = "";
 
 // Create an instance of a RDA5807 chip radio
 RDA5807M radio;
@@ -234,7 +234,6 @@ void nextPreset() {
 // Update LCD based on displayState
 void updateLCD() {
   static RADIO_FREQ lastfreq = 0;
-  static uint8_t lastmin = 0;
   static uint8_t rdsTexti = 0;
   static DISPLAY_STATE lastDisp = NULL;
   static unsigned long nextScrollTime = 0;
@@ -285,7 +284,6 @@ void updateLCD() {
       }
     case TIME: {
         if (rdsTime.hour != NULL ) {
-          lastmin = rdsTime.minute;
           String s;
           s = "     ";
           if (rdsTime.hour < 10) s += "0";
@@ -395,7 +393,7 @@ void displayGreetings() {
     lcd.print(s.substring(i, i + 1));
     delay(200);
   }
-  delay(1600);
+  delay(1400);
   lcd.noBlink();
   lcd.clear();
 } //displayGreetings
