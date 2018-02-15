@@ -129,17 +129,18 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 // - - - - - - - - - - - - - - - - - - - - - - //
 // display volume
 void volume() {
-  lcd.setCursor(0, 1); for (byte i = 0; i < 16; i++) lcd.print(" ");
+  //lcd.setCursor(0, 1); for (byte i = 0; i < 16; i++) lcd.print(" ");
   lcd.setCursor(0, 1);
   lcd.print("Vol: ");
   if (radio.getMute()) {
-    lcd.print("muted");
+    lcd.print("muted    ");
   }
   else {
     for (uint8_t i = 0; i < ((radio.getVolume() + 1) >> 1); i++) lcd.write((uint8_t) 0xFF);
     if (!(radio.getVolume() & 0x01)) lcd.write((uint8_t) 0x06);
     lcd.print(" ");
     lcd.print(radio.getVolume());
+    lcd.print("  ");
   }
 } //volume
 
