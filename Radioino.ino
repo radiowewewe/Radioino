@@ -32,7 +32,7 @@
 // | Disp           | toggle display mode |                 |                     | > freq > radio > audio >   |
 // +----------------+---------------------+-----------------+---------------------+----------------------------+
 //
-// LCD display:
+// LCDisplay:
 // +----------------------------------------------------+
 // |  Programmname  |  (T)uned (S)tereo (M)ute (B)oost  |
 // |  > RDS Text > FREQ > RDS Time > Audio > Signal >   |
