@@ -15,7 +15,7 @@
 // aka the giant shoulders we stand on
 // https://github.com/mathertel/Radio
 // https://github.com/mathertel/OneButton
-// https://github.com/marcoschwartz/LiquidCrystal_I2C
+// https://www.arduino.cc/en/Reference/LiquidCrystal
 //
 // Wiring:
 // -------
@@ -48,7 +48,7 @@
 // --------
 // * 02.01.2018 created.
 // * 28.01.2018 solution to issue with seek function
-
+// * 08.12.2018 changed display control to direkt wiring; instead of i2c
 
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  i n c l u d e s
@@ -57,17 +57,16 @@
 #include <RDA5807M.h>
 #include <RDSParser.h>
 #include <OneButton.h>
-#include <LiquidCrystal_I2C.h>
-
+#include <LiquidCrystal.h>
 
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  g l o b a l s
 // - - - - - - - - - - - - - - - - - - - - - - //
 //Buttons
-#define BUTTON_VOLDOWN 2
-#define BUTTON_VOLUP   3
-#define BUTTON_R3WE    4
-#define BUTTON_DISP    5
+#define BUTTON_VOLDOWN 19
+#define BUTTON_VOLUP   20
+#define BUTTON_R3WE    21
+#define BUTTON_DISP    22
 
 // if using PULL-UPs set bool to TRUE and FALSE for PULL-DOWN resistors
 // note: arudinos usaly have only bultin PULL-UPs
@@ -95,7 +94,7 @@ enum DISPLAY_STATE {
   TIME,     // time (RDS)
   AUDIO,    // audio info / volume
   SIG       // signalinfo SNR RSSI
-} displayState = 0;
+} displayState = TEXT;
 
 // Overload ++ operator, for cylcling trough
 inline DISPLAY_STATE& operator++(DISPLAY_STATE& state, int) {
@@ -120,9 +119,8 @@ RDA5807M radio;
 RDSParser rds;
 
 // Create an instance for LCD 16 chars and 2 line display
-// LCD address may vary
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
+// lcd (rs, enable, d0, d1, d2,d3)
+LiquidCrystal lcd(7, 6, 2, 3, 4, 5);
 
 // - - - - - - - - - - - - - - - - - - - - - - //
 //  functions and callbacks
@@ -302,11 +300,12 @@ void updateLCD() {
       }
     case SIG: {
         String s;
-        s = "SNR: ";
-        s += rinfo.snr;
+        //if you want SNR edit the radio libary
+        //s = "SNR: ";
+        //s += rinfo.snr;
         s += " RSSI: ";
         s += rinfo.rssi;
-        s += "   ";
+        s += "      ";
         lcd.print(s);
         break;
       }
@@ -371,7 +370,7 @@ void displayGreetings() {
   lcd.createChar(4, s4);
   lcd.createChar(5, s5);
   lcd.createChar(6, s6);
-  lcd.backlight();
+  //lcd.backlight();
   lcd.clear();
   lcd.blink();
   lcd.setCursor(1, 0); lcd.write((uint8_t) 0x02); lcd.write((uint8_t) 0x03);
@@ -405,8 +404,8 @@ void displayGreetings() {
 // - - - - - - - - - - - - - - - - - - - - - - //
 void setup() {
   // Initialize the Display
-  lcd.init();
-  lcd.backlight();
+  lcd.begin(16,2);
+//  lcd.backlight();
 
   // Initialize the Radio
   radio.init();
