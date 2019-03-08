@@ -63,10 +63,10 @@
 //  g l o b a l s
 // - - - - - - - - - - - - - - - - - - - - - - //
 //Buttons
-#define BUTTON_VOLDOWN 19
-#define BUTTON_VOLUP   20
-#define BUTTON_R3WE    21
-#define BUTTON_DISP    22
+#define BUTTON_VOLDOWN 14
+#define BUTTON_VOLUP   15
+#define BUTTON_R3WE    16
+#define BUTTON_DISP    17
 
 // if using PULL-UPs set bool to TRUE and FALSE for PULL-DOWN resistors
 // note: arudinos usaly have only bultin PULL-UPs
