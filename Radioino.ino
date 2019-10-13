@@ -63,17 +63,17 @@
 //  g l o b a l s
 // - - - - - - - - - - - - - - - - - - - - - - //
 //Buttons
-#define BUTTON_VOLDOWN 15
-#define BUTTON_VOLUP   14
-#define BUTTON_R3WE    16
-#define BUTTON_DISP    17
+#define BUTTON_VOLUP   A0
+#define BUTTON_VOLDOWN A1
+#define BUTTON_R3WE    A2
+#define BUTTON_DISP    A3
 
 // if using PULL-UPs set bool to TRUE and FALSE for PULL-DOWN resistors
 // note: arudinos usaly have only bultin PULL-UPs
-OneButton buttVolUp(BUTTON_VOLUP, false);
-OneButton buttVolDown(BUTTON_VOLDOWN, false);
-OneButton buttR3We(BUTTON_R3WE, false);
-OneButton buttDisp(BUTTON_DISP, false);
+OneButton buttVolUp(BUTTON_VOLUP, true);
+OneButton buttVolDown(BUTTON_VOLDOWN, true);
+OneButton buttR3We(BUTTON_R3WE, true);
+OneButton buttDisp(BUTTON_DISP, true);
 
 // Define some stations available at your locations here:
 // 87.80 MHz as 8780
