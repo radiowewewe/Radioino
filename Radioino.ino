@@ -410,7 +410,7 @@ void setup() {
   // Initialize the Radio
   radio.init();
   radio.setBandFrequency(RADIO_BAND_FM, preset[i_sidx]);
-  radio.setMono(false);
+  radio.setMono(true);
   radio.setMute(false);
   radio.setVolume(1);
   displayGreetings();
