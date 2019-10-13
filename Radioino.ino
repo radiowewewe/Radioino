@@ -63,8 +63,8 @@
 //  g l o b a l s
 // - - - - - - - - - - - - - - - - - - - - - - //
 //Buttons
-#define BUTTON_VOLDOWN 14
-#define BUTTON_VOLUP   15
+#define BUTTON_VOLDOWN 15
+#define BUTTON_VOLUP   14
 #define BUTTON_R3WE    16
 #define BUTTON_DISP    17
 
