@@ -16,7 +16,7 @@ https://github.com/marcoschwartz/LiquidCrystal_I2C
 
 # Wiring:
 
-t.b.d.
+![circuit diagram](../img/Radioino Schaltplan.png)
 
 # Userinterface:
 ```
