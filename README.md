@@ -12,11 +12,11 @@ https://github.com/mathertel/Radio
 
 https://github.com/mathertel/OneButton
 
-https://github.com/marcoschwartz/LiquidCrystal_I2C
+https://github.com/marcoschwartz/LiquidCrystal
 
 # Wiring:
 
-![circuit diagram](../img/Radioino Schaltplan.png)
+![circuit diagram](./img/Schaltplan.png)
 
 # Userinterface:
 ```
